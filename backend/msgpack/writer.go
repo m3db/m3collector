@@ -52,10 +52,11 @@ type newLockedEncoderFn func(msgpack.BufferedEncoderPool) *lockedEncoder
 type writer struct {
 	sync.RWMutex
 
-	log         xlog.Logger
-	flushSize   int
-	encoderPool msgpack.BufferedEncoderPool
-	queue       instanceQueue
+	log               xlog.Logger
+	flushSize         int
+	maxTimerBatchSize int
+	encoderPool       msgpack.BufferedEncoderPool
+	queue             instanceQueue
 
 	closed             bool
 	encodersByShard    map[uint32]*lockedEncoder
@@ -64,11 +65,12 @@ type writer struct {
 
 func newInstanceWriter(instance instance, opts ServerOptions) instanceWriter {
 	w := &writer{
-		log:             opts.InstrumentOptions().Logger(),
-		flushSize:       opts.FlushSize(),
-		encoderPool:     opts.BufferedEncoderPool(),
-		queue:           newInstanceQueue(instance, opts),
-		encodersByShard: make(map[uint32]*lockedEncoder),
+		log:               opts.InstrumentOptions().Logger(),
+		flushSize:         opts.FlushSize(),
+		maxTimerBatchSize: opts.MaxTimerBatchSize(),
+		encoderPool:       opts.BufferedEncoderPool(),
+		queue:             newInstanceQueue(instance, opts),
+		encodersByShard:   make(map[uint32]*lockedEncoder),
 	}
 	w.newLockedEncoderFn = newLockedEncoder
 	return w
@@ -176,11 +178,27 @@ func (w *writer) encodeWithLock(
 		}
 		err = encoder.EncodeCounterWithPoliciesList(cp)
 	case unaggregated.BatchTimerType:
-		btp := unaggregated.BatchTimerWithPoliciesList{
-			BatchTimer:   mu.BatchTimer(),
-			PoliciesList: pl,
+		// Honor maximum timer batch size.
+		var (
+			batchTimer     = mu.BatchTimer()
+			timerValues    = batchTimer.Values
+			numTimerValues = len(timerValues)
+			start, end     int
+		)
+		for start = 0; start < numTimerValues && err == nil; start = end {
+			end = start + w.maxTimerBatchSize
+			if end > numTimerValues {
+				end = numTimerValues
+			}
+			btp := unaggregated.BatchTimerWithPoliciesList{
+				BatchTimer: unaggregated.BatchTimer{
+					ID:     batchTimer.ID,
+					Values: timerValues[start:end],
+				},
+				PoliciesList: pl,
+			}
+			err = encoder.EncodeBatchTimerWithPoliciesList(btp)
 		}
-		err = encoder.EncodeBatchTimerWithPoliciesList(btp)
 	case unaggregated.GaugeType:
 		gp := unaggregated.GaugeWithPoliciesList{
 			Gauge:        mu.Gauge(),

@@ -246,7 +246,8 @@ func testServerOptions() ServerOptions {
 		SetConnectionOptions(testConnectionOptions()).
 		SetInstrumentOptions(instrument.NewOptions()).
 		SetTopologyOptions(testTopologyOptions()).
-		SetInstanceQueueSize(10)
+		SetInstanceQueueSize(10).
+		SetMaxTimerBatchSize(140)
 }
 
 type openFn func() error
