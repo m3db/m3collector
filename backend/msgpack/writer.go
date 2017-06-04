@@ -178,7 +178,17 @@ func (w *writer) encodeWithLock(
 		}
 		err = encoder.EncodeCounterWithPoliciesList(cp)
 	case unaggregated.BatchTimerType:
-		// Honor maximum timer batch size.
+		// If there is no limit on the timer batch size, write the full batch.
+		if w.maxTimerBatchSize == 0 {
+			btp := unaggregated.BatchTimerWithPoliciesList{
+				BatchTimer:   mu.BatchTimer(),
+				PoliciesList: pl,
+			}
+			err = encoder.EncodeBatchTimerWithPoliciesList(btp)
+			break
+		}
+
+		// Otherwise, honor maximum timer batch size.
 		var (
 			batchTimer     = mu.BatchTimer()
 			timerValues    = batchTimer.Values

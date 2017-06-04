@@ -137,6 +137,42 @@ func TestWriterWriteCounterWithPoliciesList(t *testing.T) {
 	require.Equal(t, testPoliciesList, plRes)
 }
 
+func TestWriterWriteBatchTimerWithPoliciesListNoBatchSizeLimit(t *testing.T) {
+	numValues := 65536
+	timerValues := make([]float64, numValues)
+	for i := 0; i < numValues; i++ {
+		timerValues[i] = float64(i)
+	}
+	testLargeBatchTimer := unaggregated.MetricUnion{
+		Type:          unaggregated.BatchTimerType,
+		ID:            []byte("foo"),
+		BatchTimerVal: timerValues,
+	}
+
+	opts := testServerOptions().SetMaxTimerBatchSize(0)
+	w := newInstanceWriter(testPlacementInstance, opts).(*writer)
+	w.closed = false
+	var (
+		muRes unaggregated.BatchTimer
+		plRes policy.PoliciesList
+	)
+	w.newLockedEncoderFn = func(msgpack.BufferedEncoderPool) *lockedEncoder {
+		return &lockedEncoder{
+			UnaggregatedEncoder: &mockEncoder{
+				encoder: msgpack.NewBufferedEncoder(),
+				batchTimerWithPoliciesListFn: func(btp unaggregated.BatchTimerWithPoliciesList) error {
+					muRes = btp.BatchTimer
+					plRes = btp.PoliciesList
+					return nil
+				},
+			},
+		}
+	}
+	require.NoError(t, w.Write(0, testLargeBatchTimer, testPoliciesList))
+	require.Equal(t, testLargeBatchTimer.BatchTimer(), muRes)
+	require.Equal(t, testPoliciesList, plRes)
+}
+
 func TestWriterWriteBatchTimerWithPoliciesListSmallBatchSize(t *testing.T) {
 	opts := testServerOptions().SetMaxTimerBatchSize(140)
 	w := newInstanceWriter(testPlacementInstance, opts).(*writer)

@@ -29,9 +29,9 @@ import (
 const (
 	defaultFlushSize = 1440
 
-	// defaultMaxTimerBatchSize is the default maximum timer batch size calculated
-	// based on the default flush size assuming a 150-byte metric id size.
-	defaultMaxTimerBatchSize = 140
+	// defaultMaxTimerBatchSize is the default maximum timer batch size.
+	// By default there is no limit on the timer batch size.
+	defaultMaxTimerBatchSize = 0
 
 	defaultInstanceQueueSize = 4096
 )
