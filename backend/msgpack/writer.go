@@ -225,33 +225,6 @@ func (w *writer) encodeWithLock(
 				PoliciesList: pl,
 			}
 			err = encoder.EncodeBatchTimerWithPoliciesList(btp)
-			if err != nil {
-				break
-			}
-
-			// If the buffer isn't big enough continue to the next iteration.
-			if sizeAfter := buffer.Len(); sizeAfter < w.flushSize {
-				continue
-			}
-
-			// Otherwise we enqueue the current buffer.
-			oldBufferedEncoder := w.prepareEnqueueBufferWithLock(encoder, sizeBefore)
-
-			// Update variables since the encoder's buffer has been updated.
-			bufferedEncoder = encoder.Encoder()
-			buffer = bufferedEncoder.Buffer()
-			sizeBefore = buffer.Len()
-
-			// Unlock the encoder before we enqueue the old buffer to ensure other
-			// goroutines have an oppurtunity to encode metrics while larger timer
-			// batches are being encoded.
-			encoder.Unlock()
-
-			err := w.enqueueBuffer(oldBufferedEncoder)
-			encoder.Lock()
-			if err != nil {
-				break
-			}
 		}
 	case unaggregated.GaugeType:
 		gp := unaggregated.GaugeWithPoliciesList{
