@@ -61,6 +61,9 @@ import:
 - package: github.com/golang/mock
   version: 77f22c2b84e452a6b76fb0d1b09c9cfb44746aa4
 
+- package: github.com/leanovate/gopter
+  version: 9e6101e5a87586b269acf3d0d61f363e4317309f
+
 testImports:
 
 - package: github.com/stretchr/testify
@@ -68,6 +71,3 @@ testImports:
   subpackages:
   - assert
   - require
-
-- package: github.com/leanovate/gopter
-  version: 9e6101e5a87586b269acf3d0d61f363e4317309f

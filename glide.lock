@@ -1,5 +1,5 @@
-hash: 7790daef613944e717e0288e766ae2e631fc4b1fe0f1245f8fd7e5363a13396a
-updated: 2018-03-15T15:34:15.709719-04:00
+hash: 43a21f02d5c34d4a10a8d7ad093cf9dbf38235c7279110b89512f62613a8b933
+updated: 2018-03-15T16:22:48.420635-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -23,6 +23,11 @@ imports:
   version: 7390af9dcd3c33042ebaf2474a1724a83cf1a7e6
   subpackages:
   - proto
+- name: github.com/leanovate/gopter
+  version: 9e6101e5a87586b269acf3d0d61f363e4317309f
+  subpackages:
+  - gen
+  - prop
 - name: github.com/m3db/m3cluster
   version: 6b9b5a7eae36b0f3fc23823250d4536f6518332f
   subpackages:
@@ -153,8 +158,3 @@ imports:
 testImports:
 - name: github.com/fortytw2/leaktest
   version: 3b724c3d7b8729a35bf4e577f71653aec6e53513
-- name: github.com/leanovate/gopter
-  version: bd58674850f41c4f6a340113737c9c28f30f5695
-  subpackages:
-  - gen
-  - prop
